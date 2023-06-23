@@ -63,3 +63,34 @@ for (i in 1:length(mispriming_list)){
     }
   )
 }
+
+
+####################
+# Concat result dataframes
+
+library(dplyr)
+library(tidyverse)
+library(bedr)
+
+score_dfs_list <- list.files(path = 'PWM_match')
+
+
+score_dfs<-mapply(read.csv, file = paste('PWM_match', score_dfs_list, sep = '/'),  SIMPLIFY = FALSE)
+
+score_dfs_fixed <- lapply(score_dfs, function(df) {
+  transform(df, Chrom = as.character(Chrom))})
+combined <- bind_rows(score_dfs_fixed)
+
+tempbed <- data.frame(chr=combined$Chrom, start=combined$Start, end=combined$End, name=rownames(combined), score=combined$Score, strand=combined$Strand)
+merge_bed<- bedr.merge.region(tempbed, check.chr = FALSE, list.names = TRUE)
+
+no_overlap_bed <- merge_bed[!grepl(",", merge_bed$names), ]
+filtered_merged_bed <- merge_bed[grepl(",", merge_bed$names), ] #only the peaks that have overlap
+
+split_names <- lapply(filtered_merged_bed$names, function(x) {
+  lapply(strsplit(x, ",")[[1]], function(y){as.integer(y)})
+})
+
+a<-combined[unlist(split_names),]
+
+b <- bind_rows(no_overlap_bed, filtered_merged_bed)
