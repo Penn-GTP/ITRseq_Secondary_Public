@@ -34,6 +34,8 @@ CallMispriming <- function(fbam, fbed, seed.seq, max.mismatch=0, min.total=1, mi
     flg <- scanBamFlag(isPaired = TRUE, isSecondaryAlignment = FALSE);
     aln <- readGAlignmentPairs(fbam, param = ScanBamParam(what=c('qname', 'cigar', 'seq'), which=gr, flag=flg));
     
+    print(fbed)
+    
     cnt <- lapply(1:length(gr), function(i) {
       read2 <- aln[countOverlaps(aln, gr[i], maxgap = 1)>0]@last;
       names(read2) <- 1:length(read2);
