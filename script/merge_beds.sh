@@ -15,7 +15,7 @@ rm ${outname}_cat_sorted.bed
 
 merged_num_lines=$(cat ${outname}_merged.bed | wc -l)
 
-sort -nrk 5 ${outname}_merged.bed > ${outname}_merged_sorted.bed #sort by score
+sort -nrk 5,5 ${outname}_merged.bed > ${outname}_merged_sorted.bed #sort by score
 rm ${outname}_merged.bed
 
 bedtools window -w 500 -a ${outname}_merged_sorted.bed -b ARCUS_target_Mmul10.bed -v > ${outname}_merged_sorted_offtarget.bed #the inverse of the step below, only keeping off-target sites
