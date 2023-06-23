@@ -108,7 +108,7 @@ combined <- bind_rows(score_dfs_fixed)
 
 tempbed <- data.frame(chr=combined$Chrom, start=combined$Start, end=combined$End, name=combined$sample, score=combined$Score, strand=combined$Strand)
 
-write_tsv(tempbed, '2020-007-liver-no-mispriming-peaks.bed')
+write_tsv(tempbed, '2020-007-nonliver-no-mispriming-peaks.bed', col_names = FALSE)
 # merge_bed<- bedr.merge.region(tempbed, check.chr = FALSE, list.names = TRUE)
 # 
 # no_overlap_bed <- merge_bed[!grepl(",", merge_bed$names), ]
