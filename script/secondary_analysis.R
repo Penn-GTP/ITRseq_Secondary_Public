@@ -22,12 +22,23 @@ write.csv(file_paths, 'filepaths.csv')
 
 #file_C592 <- read_csv("file_C592.csv")
 
+### Remove On-Target ###
+
+library(bedtoolsr)
+
+off_target_beds <- mapply(bt.window, a=file_paths$bed, b='ARCUS_target_Mmul10.bed', w=500, v=TRUE, SIMPLIFY = FALSE)
+
+for (i in 1:length(off_target_beds)){
+  write_tsv(data.frame(off_target_beds[i]), paste0('offtarget_beds/offtarget_', unlist(strsplit(names(off_target_beds[i]), '/'))[6]), col_names = FALSE)
+}
+
 ########################
 # Mispriming
 
+
 seed.seq <- "ACTCCCTC"
 
-mispriming <- mapply(CallMispriming, fbam = file_paths$bam, fbed = file_paths$bed, seed.seq = seed.seq)
+mispriming <- mapply(CallMispriming, fbam = file_paths$bam, fbed = paste0( 'offtarget_beds/' ,list.files(path = 'offtarget_beds', pattern = '.*bed$')), seed.seq = seed.seq)
 mispriming_list <- list()
 for (i in 1:length(mispriming)){
   temp <- data.frame(mispriming[i])
@@ -52,7 +63,7 @@ for (i in 1:length(anno)){
   temp <- data.frame(anno[i])
   tryCatch(
     expr={
-      colnames(temp) <- c("Peak", "Chrom", "Start", "End", "Read", "Score", "Gene_ID", "Gene_Name", "Gene_Biotype", "Gene_Description", "Gene_TSS", "Gene_TSS2", "Strand", "Overlap", "Dist2TSS", "CDS", "Promotor", "5UTR", "3UTR", "Intragenic", "Intergenic", "Representative")
+      colnames(temp) <- c("Peak", "Chrom", "Start", "End", "Read", "Score", "Gene_ID", "Gene_Name", "Gene_Biotype", "Gene_Description", "Gene_TSS", "Gene_TTS", "Strand", "Overlap", "Dist2TSS", "CDS", "Promoter", "5UTR", "3UTR", "Intragenic", "Intergenic", "Representative")
     },
     error = function(e){})
   
@@ -108,16 +119,11 @@ combined <- bind_rows(score_dfs_fixed)
 
 tempbed <- data.frame(chr=combined$Chrom, start=combined$Start, end=combined$End, name=combined$sample, score=combined$Score, strand=combined$Strand)
 
-write_tsv(tempbed, '2020-007-nonliver-no-mispriming-peaks.bed', col_names = FALSE)
-# merge_bed<- bedr.merge.region(tempbed, check.chr = FALSE, list.names = TRUE)
-# 
-# no_overlap_bed <- merge_bed[!grepl(",", merge_bed$names), ]
-# filtered_merged_bed <- merge_bed[grepl(",", merge_bed$names), ] #only the peaks that have overlap
-# 
-# split_names <- lapply(filtered_merged_bed$names, function(x) {
-#   lapply(strsplit(x, ",")[[1]], function(y){as.integer(y)})
-# })
-# 
-# a<-combined[unlist(split_names),]
-# 
-# b <- bind_rows(no_overlap_bed, filtered_merged_bed)
+
+out_name <- '2020-007-nonliver-no-mispriming-peaks.bed'
+write_tsv(tempbed, out_name, col_names = FALSE)
+out.sort <- bt.sort(out_name)
+out.merged <- bt.merge(out.sort, d=44, c='4,5,6', o='collapse,sum,distinct')
+
+write_tsv(out.merged, out_name, col_names = FALSE)
+
