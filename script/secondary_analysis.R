@@ -88,21 +88,23 @@ for (i in 1:length(anno)){
   tryCatch(
     expr={
       colnames(temp) <- c("Peak", "Chrom", "Start", "End", "Read", "Score", "Gene_ID", "Gene_Name", "Gene_Biotype", "Gene_Description", "Gene_TSS", "Gene_TTS", "Strand", "Overlap", "Dist2TSS", "CDS", "Promoter", "5UTR", "3UTR", "Intragenic", "Intergenic", "Representative")
-    },
+      
+      },
     error = function(e){})
-  
-  
+  temp <- temp[!(temp$Chrom == '1' & temp$Start >= 169386114 -1000 & temp$End <= 169386136 + 1000), ] #remove on-target
+  temp <- temp[mispriming_list[[i]]$Mispriming == FALSE,] #remove mispriming
   smp_names[[i]] <- str_sub(unlist(strsplit(names(anno[i]), '/'))[6], 1, -19)
   
   tryCatch(
     expr={
       temp$sample <- smp_names[[i]]    },
     error = function(e){})
-  
   anno_list[[i]] <- temp
-  
   write.csv(temp, paste('annotation/',str_sub(unlist(strsplit(names(anno[i]), '/'))[6], 1, -19),'_anno.csv', sep=''))
-}
+
+  
+  
+  }
 #anno <- lapply(anno , function(x){ row.names(x)<-as.character(x$Peak); x}) #set the peak to rownames
 
 ###################
