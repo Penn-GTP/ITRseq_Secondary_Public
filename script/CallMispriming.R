@@ -32,7 +32,7 @@ CallMispriming <- function(fbam, fbed, seed.seq, max.mismatch=0, min.total=1, mi
     bed <- read.csv(fbed, header = FALSE, sep='\t', stringsAsFactors = FALSE);
     gr  <- GRanges(bed[, 1], IRanges(bed[, 2], bed[, 3]));
     flg <- scanBamFlag(isPaired = TRUE, isSecondaryAlignment = FALSE);
-    aln <- readGAlignmentPairs(fbam, param = ScanBamParam(what=c('qname', 'cigar', 'seq'), which=gr, flag=flg));
+    aln <- readGAlignmentPairs(fbam, param = ScanBamParam(what=c('qname', 'cigar', 'seq'), flag=flg));
     
     print(fbed)
     
