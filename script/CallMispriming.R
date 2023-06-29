@@ -64,8 +64,10 @@ CallMispriming <- function(fbam, fbed, seed.seq, max.mismatch=0, min.total=1, mi
     cnt <- do.call('rbind', cnt);
     colnames(cnt) <- c('Total', 'Plus', 'Minus', 'Seeded', 'Seeded_Plus', 'Seeded_Minus');
     rownames(cnt) <- paste0(bed[, 1], ':', bed[, 2], '-', bed[, 3]);
+
+    score <- bed[,5];
     
-    out <- cbind(cnt, Mispriming=1-as.integer(cnt[, 4]>=min.total & cnt[, 5]>=min.strand & cnt[, 6]>=min.strand));
+    out <- cbind(cnt, Score=score, Mispriming=1-as.integer(cnt[, 4]>=min.total & cnt[, 5]>=min.strand & cnt[, 6]>=min.strand));
     
     invisible(out);
   }
