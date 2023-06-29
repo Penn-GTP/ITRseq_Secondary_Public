@@ -37,21 +37,45 @@ for (i in 1:length(off_target_beds)){
 
 
 seed.seq <- "ACTCCCTC"
-
+dir.create('mispriming/bed')
 mispriming <- mapply(CallMispriming, fbam = file_paths$bam, fbed = paste0( 'offtarget_beds/' ,list.files(path = 'offtarget_beds', pattern = '.*bed$')), seed.seq = seed.seq)
+
 mispriming_list <- list()
 for (i in 1:length(mispriming)){
   temp <- data.frame(mispriming[i])
   tryCatch(
     expr = {
-      colnames(temp) <- c('Total','Plus','Minus','Seeded','Plus_seeded','Minus_seeded','Mispriming')
+      colnames(temp) <- c('Total','Plus','Minus','Seeded','Plus_seeded','Minus_seeded','Score','Mispriming')
     },
     error = function(e){ #do nothing
     })
   
   mispriming_list[[i]] <- temp
-  write.csv(temp, paste('mispriming/',str_sub(unlist(strsplit(names(mispriming[i]), '/'))[6], 1, -41),'_mispriming.csv', sep=''))
-}
+  
+  realpeaks<- temp[temp$Mispriming == 0,] #removes any mispriming peaks
+  name <- str_sub(unlist(strsplit(names(mispriming[i]), '/'))[6], 1, -41)
+  
+  print(name)
+  file.create(paste0('mispriming/bed/', name, 'offtarget_no_mispriming.bed'))
+  
+  if (nrow(realpeaks) > 0){
+  for (j in 1:nrow(realpeaks)){
+    chrom <- strsplit(rownames(realpeaks), ':')[[j]][1]
+    
+    coords <- strsplit(rownames(realpeaks), ':')[[j]][2]
+    start <- strsplit(coords, '-')[[1]][1]
+    end <- strsplit(coords, '-')[[1]][2]
+    
+    df <- data.frame(chrom=chrom, start=start, end=end, name=name, score=temp$Score[j])
+    write_tsv(df, paste0('mispriming/bed/', name, 'offtarget_no_mispriming.bed'), append = TRUE)
+  }
+  }
+  write.csv(temp, paste('mispriming/',name ,'_mispriming.csv', sep=''))
+  }
+
+
+
+
 
 ##############################
 # Annotation
@@ -126,4 +150,3 @@ out.sort <- bt.sort(out_name)
 out.merged <- bt.merge(out.sort, d=44, c='4,5,6', o='collapse,sum,distinct')
 
 write_tsv(out.merged, out_name, col_names = FALSE)
-
