@@ -114,7 +114,8 @@ pwm <- as.matrix(readRDS('PWM.rds'))
 for (i in 1:length(mispriming_list)){
   print(i)
   mispriming_list[[i]][['Mispriming']] = as.logical(mispriming_list[[i]][['Mispriming']]) #changes misprimed peaks from 1 to TRUE
-  masked_anno <- anno_list[[i]][!mispriming_list[[i]][['Mispriming']],] # only keeps FALSE in mispriming
+  #masked_anno <- anno_list[[i]][!mispriming_list[[i]][['Mispriming']],] # only keeps FALSE in mispriming
+  masked_anno <- anno_list[[i]]
   tryCatch(
     exp = {
       match <- MatchGenomeToPWM(Mmulatta, paste0('chr', masked_anno$Chrom), masked_anno$Start, masked_anno$End, pwm)
@@ -131,8 +132,6 @@ for (i in 1:length(mispriming_list)){
 # Concat result dataframes
 
 library(dplyr)
-library(tidyverse)
-library(bedr)
 
 score_dfs_list <- list.files(path = 'PWM_match')
 
@@ -146,7 +145,7 @@ combined <- bind_rows(score_dfs_fixed)
 tempbed <- data.frame(chr=combined$Chrom, start=combined$Start, end=combined$End, name=combined$sample, score=combined$Score, strand=combined$Strand)
 
 
-out_name <- 'C662-offtarget-no-mispriming-peaks.bed'
+out_name <- 'C665-offtarget-no-mispriming-peaks.bed'
 write_tsv(tempbed, out_name, col_names = FALSE)
 out.sort <- bt.sort(out_name)
 out.merged <- bt.merge(out.sort, d=44, c='4,5,6', o='collapse,sum,distinct')
