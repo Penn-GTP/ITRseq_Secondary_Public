@@ -32,42 +32,48 @@ CallMispriming <- function(fbam, fbed, seed.seq, max.mismatch=0, min.total=1, mi
     bed <- read.csv(fbed, header = FALSE, sep='\t', stringsAsFactors = FALSE);
     gr  <- GRanges(bed[, 1], IRanges(bed[, 2], bed[, 3]));
     flg <- scanBamFlag(isPaired = TRUE, isSecondaryAlignment = FALSE);
-    aln <- readGAlignmentPairs(fbam, param = ScanBamParam(what=c('qname', 'cigar', 'seq'), flag=flg));
     
-    print(fbed)
+    print(fbed);
     
-    cnt <- lapply(1:length(gr), function(i) {
+    cnt <- lapply(1:length(gr), function(i) { print(i);
+      aln <- readGAlignmentPairs(fbam, param = ScanBamParam(what=c('qname', 'cigar', 'seq'), which=gr[i], flag=flg));
+      
       read2 <- aln[countOverlaps(aln, gr[i], maxgap = 1)>0]@last;
-      names(read2) <- 1:length(read2);
       
-      ## Match seed sequence 
-      seed.match <- lapply(1:length(sseq), function(j) {
-        s <- sseq[[j]];
-        m <- vmatchPattern(s, read2@elementMetadata$seq, max.mismatch = max.mismatch);
-        q <- rep(names(read2), elementNROWS(m));
-        m <- unlist(m);
-        GRanges(q, m);
-      });
-      seed.match <- suppressWarnings(do.call('c', seed.match));
-      
-      ## Region within read matching genomic sequence according to CIGAR
-      genome.match <- cigarRangesAlongQuerySpace(cigar(read2), ops = 'M');
-      genome.match <- GRanges(rep(names(read2), elementNROWS(genome.match)), unlist(genome.match));
-      
-      match <- seed.match[countOverlaps(seed.match, genome.match, type='within')==0];
-      sel  <- read2[unique(as.vector(seqnames(match)))];
-      
-      str0 <- as.vector(strand(read2));
-      str1 <- as.vector(strand(sel));
-      c(length(read2), length(read2[str0=='+']), length(read2[str0=='-']), length(sel), length(sel[str1=='+']), length(sel[str1=='-']));
+      if (length(read2) == 0) rep(0, 6) else {
+        
+        names(read2) <- 1:length(read2);
+        
+        ## Match seed sequence 
+        seed.match <- lapply(1:length(sseq), function(j) {
+          s <- sseq[[j]];
+          m <- vmatchPattern(s, read2@elementMetadata$seq, max.mismatch = max.mismatch);
+          q <- rep(names(read2), elementNROWS(m));
+          m <- unlist(m);
+          GRanges(q, m);
+        });
+        seed.match <- suppressWarnings(do.call('c', seed.match));
+        
+        ## Region within read matching genomic sequence according to CIGAR
+        genome.match <- cigarRangesAlongQuerySpace(cigar(read2), ops = 'M');
+        genome.match <- GRanges(rep(names(read2), elementNROWS(genome.match)), unlist(genome.match));
+        
+        match <- seed.match[countOverlaps(seed.match, genome.match, type='within')==0];
+        sel  <- read2[unique(as.vector(seqnames(match)))];
+        
+        str0 <- as.vector(strand(read2));
+        str1 <- as.vector(strand(sel));
+        c(length(read2), length(read2[str0=='+']), length(read2[str0=='-']), length(sel), length(sel[str1=='+']), length(sel[str1=='-']));
+      }
     });
     cnt <- do.call('rbind', cnt);
     colnames(cnt) <- c('Total', 'Plus', 'Minus', 'Seeded', 'Seeded_Plus', 'Seeded_Minus');
     rownames(cnt) <- paste0(bed[, 1], ':', bed[, 2], '-', bed[, 3]);
 
-    score <- bed[,5];
+    # score <- bed[,5];
     
-    out <- cbind(cnt, Score=score, Mispriming=1-as.integer(cnt[, 4]>=min.total & cnt[, 5]>=min.strand & cnt[, 6]>=min.strand));
+    out <- cbind(cnt, Mispriming=1-as.integer(cnt[, 4]>=min.total & cnt[, 5]>=min.strand & cnt[, 6]>=min.strand));
+    out[rowSums(cnt)==0, 7] <- 0;
     
     invisible(out);
   }
