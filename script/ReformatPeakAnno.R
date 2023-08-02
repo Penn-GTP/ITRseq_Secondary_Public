@@ -41,6 +41,18 @@ ReformatPeakAnno <- function(ftxt) {
     lst1 <- sub('^.+-', '', loc1);
     tss1 <- fst1;
     tts1 <- lst1;
+
+    
+    # Convert "NA" to actual NA values
+    tss1[tss1 == "NA"] <- NA
+    tts1[tts1 == "NA"] <- NA
+    str1[str1 == "NA"] <- NA
+    
+    # Replace NA values with 0
+    tss1[is.na(tss1)] <- 0
+    tts1[is.na(tts1)] <- 0
+    str1[is.na(str1)] <- 0
+                                            
     tss1[str1=='-'] <- lst1[str1=='-'];
     tts1[str1=='-'] <- fst1[str1=='-'];
     
